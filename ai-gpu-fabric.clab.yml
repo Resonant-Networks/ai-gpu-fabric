@@ -58,27 +58,29 @@ topology:
       kind: linux
       mgmt-ipv4: 172.30.50.101
       exec:
-        - ip link set dev gpu0 up && ip addr add 10.100.1.1/24 dev gpu0
-        - ip link set dev gpu1 up && ip addr add 10.100.2.1/24 dev gpu1
-        - ip link set dev gpu2 up && ip addr add 10.100.3.1/24 dev gpu2
-        - ip link set dev gpu3 up && ip addr add 10.100.4.1/24 dev gpu3
-        - ip link set dev gpu4 up && ip addr add 10.100.5.1/24 dev gpu4
-        - ip link set dev gpu5 up && ip addr add 10.100.6.1/24 dev gpu5
-        - ip link set dev gpu6 up && ip addr add 10.100.7.1/24 dev gpu6
-        - ip link set dev gpu7 up && ip addr add 10.100.8.1/24 dev gpu7
+        - bash -c "ip link set dev gpu0 mtu 9216 up && ip addr add 10.100.1.1/24 dev gpu0"
+        - bash -c "ip link set dev gpu1 mtu 9216 up && ip addr add 10.100.2.1/24 dev gpu1"
+        - bash -c "ip link set dev gpu2 mtu 9216 up && ip addr add 10.100.3.1/24 dev gpu2"
+        - bash -c "ip link set dev gpu3 mtu 9216 up && ip addr add 10.100.4.1/24 dev gpu3"
+        - bash -c "ip link set dev gpu4 mtu 9216 up && ip addr add 10.100.5.1/24 dev gpu4"
+        - bash -c "ip link set dev gpu5 mtu 9216 up && ip addr add 10.100.6.1/24 dev gpu5"
+        - bash -c "ip link set dev gpu6 mtu 9216 up && ip addr add 10.100.7.1/24 dev gpu6"
+        - bash -c "ip link set dev gpu7 mtu 9216 up && ip addr add 10.100.8.1/24 dev gpu7"
+        - bash -c "sysctl -w net.ipv4.tcp_ecn=1"
 
     gpu-node2:
       kind: linux
       mgmt-ipv4: 172.30.50.102
       exec:
-        - ip link set dev gpu0 up && ip addr add 10.100.1.2/24 dev gpu0
-        - ip link set dev gpu1 up && ip addr add 10.100.2.2/24 dev gpu1
-        - ip link set dev gpu2 up && ip addr add 10.100.3.2/24 dev gpu2
-        - ip link set dev gpu3 up && ip addr add 10.100.4.2/24 dev gpu3
-        - ip link set dev gpu4 up && ip addr add 10.100.5.2/24 dev gpu4
-        - ip link set dev gpu5 up && ip addr add 10.100.6.2/24 dev gpu5
-        - ip link set dev gpu6 up && ip addr add 10.100.7.2/24 dev gpu6
-        - ip link set dev gpu7 up && ip addr add 10.100.8.2/24 dev gpu7
+        - bash -c "ip link set dev gpu0 mtu 9216 up && ip addr add 10.100.1.2/24 dev gpu0"
+        - bash -c "ip link set dev gpu1 mtu 9216 up && ip addr add 10.100.2.2/24 dev gpu1"
+        - bash -c "ip link set dev gpu2 mtu 9216 up && ip addr add 10.100.3.2/24 dev gpu2"
+        - bash -c "ip link set dev gpu3 mtu 9216 up && ip addr add 10.100.4.2/24 dev gpu3"
+        - bash -c "ip link set dev gpu4 mtu 9216 up && ip addr add 10.100.5.2/24 dev gpu4"
+        - bash -c "ip link set dev gpu5 mtu 9216 up && ip addr add 10.100.6.2/24 dev gpu5"
+        - bash -c "ip link set dev gpu6 mtu 9216 up && ip addr add 10.100.7.2/24 dev gpu6"
+        - bash -c "ip link set dev gpu7 mtu 9216 up && ip addr add 10.100.8.2/24 dev gpu7"
+        - bash -c "sysctl -w net.ipv4.tcp_ecn=1"
 
   links:
     # -------------------------------------------------------------------------

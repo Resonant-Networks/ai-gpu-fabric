@@ -51,3 +51,46 @@ In a rail-optimized fabric (standard in NVIDIA SuperPOD / DGX H100 architectures
 | **Rail Leaf** | `rail8` | `nokia_srlinux` | `172.30.50.28` | Rail 8 Leaf (Dedicated to GPU 7 on each host) |
 | **Compute** | `gpu-node1` | `linux` | `172.30.50.101` | H100 Server 1 (`gpu0`–`gpu7` on subnets `10.100.1.0/24`–`10.100.8.0/24`) |
 | **Compute** | `gpu-node2` | `linux` | `172.30.50.102` | H100 Server 2 (`gpu0`–`gpu7` on subnets `10.100.1.0/24`–`10.100.8.0/24`) |
+
+---
+
+## 4. Fabric Routing & RoCEv2 Lossless Profile
+
+### BGP Underlay Routing
+* **Spine AS:** `65000` (Spine 1 router-id `10.255.0.11`, Spine 2 router-id `10.255.0.12`)
+* **Leaf AS:** `65021`–`65028` (`rail1` through `rail8`)
+* **ECMP Multipathing:** Enabled (`multipath ebgp maximum-paths 64`) on all switches.
+* **Inter-Rail Routing:** Dual-homed uplinks from each rail leaf to `spine1` and `spine2` provide 2 equal-cost paths to all other rails.
+* **Intra-Rail Switching:** L2 MAC-VRF bridge domains on each leaf switch provide direct single-hop switching between server GPUs on the same rail with line-rate forwarding.
+
+### RoCEv2 Lossless Network Configuration
+* **Jumbo MTU:** Port MTU `9216`, IP MTU `9000`, L2 MTU `9200` on switch interfaces and host GPU interfaces (`gpu0`–`gpu7`).
+* **PFC (Priority Flow Control):** Priority 3 lossless queue mapped to forwarding-class `fc3` via 802.1p (`dot1p-policy rocev2-pfc`) and DSCP 24/26 (`dscp-policy rocev2-dscp`).
+* **ECN / DCQCN:** Explicit Congestion Notification globally enabled on all SR Linux nodes (`qos explicit-congestion-notification`) with WRED ECN slope configured in queue-management-profile `rocev2-ecn` (min-threshold 20%, max-threshold 80%).
+* **Host ECN:** `net.ipv4.tcp_ecn = 1` enabled on compute containers.
+
+---
+
+## 5. Automation & Lifecycle Commands
+
+```bash
+# 1. Deploy the topology
+sudo clab deploy -t ai-gpu-fabric.clab.yml
+
+# 2. Automatically configure BGP, RoCEv2, and compute interfaces
+python3 configure_fabric.py
+
+# 3. Verify BGP sessions on Spine switches
+docker exec clab-ai-gpu-fabric-spine1 sr_cli "show network-instance default protocols bgp neighbor"
+docker exec clab-ai-gpu-fabric-spine2 sr_cli "show network-instance default protocols bgp neighbor"
+
+# 4. Verify end-to-end Jumbo Frame connectivity across all 8 rails
+docker exec clab-ai-gpu-fabric-gpu-node1 bash -c '
+for i in {1..8}; do
+  ping -c 2 -W 2 -M do -s 8972 -I gpu$((i-1)) 10.100.$i.2 && echo "Rail $i OK"
+done
+'
+
+# 5. Teardown
+sudo clab destroy -t ai-gpu-fabric.clab.yml --cleanup
+```
