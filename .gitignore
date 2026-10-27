@@ -1,0 +1,17 @@
+# Containerlab runtime artifacts
+clab-*/
+.clab/
+*.log
+*.pcap
+*.tar
+*.bak
+
+# Environment / secrets
+.env
+*.key
+*.pem
+
+# OS / Editor artifacts
+.DS_Store
+*.swp
+*~

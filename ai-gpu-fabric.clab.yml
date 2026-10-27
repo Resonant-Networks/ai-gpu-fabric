@@ -1,0 +1,140 @@
+name: ai-gpu-fabric
+
+mgmt:
+  network: clab-ai-fabric
+  ipv4-subnet: 172.30.50.0/24
+
+topology:
+  kinds:
+    nokia_srlinux:
+      image: ghcr.io/nokia/srlinux
+    linux:
+      image: ghcr.io/hellt/network-multitool
+
+  nodes:
+    # -------------------------------------------------------------------------
+    # Spine Tier: Non-blocking interconnect across all rails
+    # -------------------------------------------------------------------------
+    spine1:
+      kind: nokia_srlinux
+      mgmt-ipv4: 172.30.50.11
+
+    spine2:
+      kind: nokia_srlinux
+      mgmt-ipv4: 172.30.50.12
+
+    # -------------------------------------------------------------------------
+    # Rail Leaf Tier: 8 independent rail switches (rail1 through rail8)
+    # -------------------------------------------------------------------------
+    rail1:
+      kind: nokia_srlinux
+      mgmt-ipv4: 172.30.50.21
+    rail2:
+      kind: nokia_srlinux
+      mgmt-ipv4: 172.30.50.22
+    rail3:
+      kind: nokia_srlinux
+      mgmt-ipv4: 172.30.50.23
+    rail4:
+      kind: nokia_srlinux
+      mgmt-ipv4: 172.30.50.24
+    rail5:
+      kind: nokia_srlinux
+      mgmt-ipv4: 172.30.50.25
+    rail6:
+      kind: nokia_srlinux
+      mgmt-ipv4: 172.30.50.26
+    rail7:
+      kind: nokia_srlinux
+      mgmt-ipv4: 172.30.50.27
+    rail8:
+      kind: nokia_srlinux
+      mgmt-ipv4: 172.30.50.28
+
+    # -------------------------------------------------------------------------
+    # Compute Tier: 2x H100 Compute Nodes with 8 GPU interfaces each (GPU 0..7)
+    # -------------------------------------------------------------------------
+    gpu-node1:
+      kind: linux
+      mgmt-ipv4: 172.30.50.101
+      exec:
+        - ip link set dev gpu0 up && ip addr add 10.100.1.1/24 dev gpu0
+        - ip link set dev gpu1 up && ip addr add 10.100.2.1/24 dev gpu1
+        - ip link set dev gpu2 up && ip addr add 10.100.3.1/24 dev gpu2
+        - ip link set dev gpu3 up && ip addr add 10.100.4.1/24 dev gpu3
+        - ip link set dev gpu4 up && ip addr add 10.100.5.1/24 dev gpu4
+        - ip link set dev gpu5 up && ip addr add 10.100.6.1/24 dev gpu5
+        - ip link set dev gpu6 up && ip addr add 10.100.7.1/24 dev gpu6
+        - ip link set dev gpu7 up && ip addr add 10.100.8.1/24 dev gpu7
+
+    gpu-node2:
+      kind: linux
+      mgmt-ipv4: 172.30.50.102
+      exec:
+        - ip link set dev gpu0 up && ip addr add 10.100.1.2/24 dev gpu0
+        - ip link set dev gpu1 up && ip addr add 10.100.2.2/24 dev gpu1
+        - ip link set dev gpu2 up && ip addr add 10.100.3.2/24 dev gpu2
+        - ip link set dev gpu3 up && ip addr add 10.100.4.2/24 dev gpu3
+        - ip link set dev gpu4 up && ip addr add 10.100.5.2/24 dev gpu4
+        - ip link set dev gpu5 up && ip addr add 10.100.6.2/24 dev gpu5
+        - ip link set dev gpu6 up && ip addr add 10.100.7.2/24 dev gpu6
+        - ip link set dev gpu7 up && ip addr add 10.100.8.2/24 dev gpu7
+
+  links:
+    # -------------------------------------------------------------------------
+    # Rail Downlinks: GPU[i] on each host connects directly to rail[i+1]
+    # -------------------------------------------------------------------------
+    # Rail 1 (GPU 0)
+    - endpoints: ["rail1:e1-1", "gpu-node1:gpu0"]
+    - endpoints: ["rail1:e1-2", "gpu-node2:gpu0"]
+
+    # Rail 2 (GPU 1)
+    - endpoints: ["rail2:e1-1", "gpu-node1:gpu1"]
+    - endpoints: ["rail2:e1-2", "gpu-node2:gpu1"]
+
+    # Rail 3 (GPU 2)
+    - endpoints: ["rail3:e1-1", "gpu-node1:gpu2"]
+    - endpoints: ["rail3:e1-2", "gpu-node2:gpu2"]
+
+    # Rail 4 (GPU 3)
+    - endpoints: ["rail4:e1-1", "gpu-node1:gpu3"]
+    - endpoints: ["rail4:e1-2", "gpu-node2:gpu3"]
+
+    # Rail 5 (GPU 4)
+    - endpoints: ["rail5:e1-1", "gpu-node1:gpu4"]
+    - endpoints: ["rail5:e1-2", "gpu-node2:gpu4"]
+
+    # Rail 6 (GPU 5)
+    - endpoints: ["rail6:e1-1", "gpu-node1:gpu5"]
+    - endpoints: ["rail6:e1-2", "gpu-node2:gpu5"]
+
+    # Rail 7 (GPU 6)
+    - endpoints: ["rail7:e1-1", "gpu-node1:gpu6"]
+    - endpoints: ["rail7:e1-2", "gpu-node2:gpu6"]
+
+    # Rail 8 (GPU 7)
+    - endpoints: ["rail8:e1-1", "gpu-node1:gpu7"]
+    - endpoints: ["rail8:e1-2", "gpu-node2:gpu7"]
+
+    # -------------------------------------------------------------------------
+    # Spine Uplinks: Rail Leaves to Spine switches
+    # -------------------------------------------------------------------------
+    # Spine 1 to Rail Leaves (ports e1-1 through e1-8)
+    - endpoints: ["spine1:e1-1", "rail1:e1-3"]
+    - endpoints: ["spine1:e1-2", "rail2:e1-3"]
+    - endpoints: ["spine1:e1-3", "rail3:e1-3"]
+    - endpoints: ["spine1:e1-4", "rail4:e1-3"]
+    - endpoints: ["spine1:e1-5", "rail5:e1-3"]
+    - endpoints: ["spine1:e1-6", "rail6:e1-3"]
+    - endpoints: ["spine1:e1-7", "rail7:e1-3"]
+    - endpoints: ["spine1:e1-8", "rail8:e1-3"]
+
+    # Spine 2 to Rail Leaves (ports e1-1 through e1-8)
+    - endpoints: ["spine2:e1-1", "rail1:e1-4"]
+    - endpoints: ["spine2:e1-2", "rail2:e1-4"]
+    - endpoints: ["spine2:e1-3", "rail3:e1-4"]
+    - endpoints: ["spine2:e1-4", "rail4:e1-4"]
+    - endpoints: ["spine2:e1-5", "rail5:e1-4"]
+    - endpoints: ["spine2:e1-6", "rail6:e1-4"]
+    - endpoints: ["spine2:e1-7", "rail7:e1-4"]
+    - endpoints: ["spine2:e1-8", "rail8:e1-4"]
